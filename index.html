@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contador</title>
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Botones y otros elementos */
+        .button {
+            padding: 15px;
+            font-size: 1em;
+            margin: 5px;
+            cursor: pointer;
+            border: 2px solid black;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            width: calc(45% - 10px);
+            max-width: 200px;
+        }
+
+        /* Estilo de los botones por ID */
+        #comenzar {
+            background-color: #007bff; /* Azul */
+            color: white;
+        }
+
+        #pieza-aceptada,
+        #eliminar-pieza {
+            background-color: #ffffff; /* Blanco */
+            color: black;
+            border: 2px solid #333;
+        }
+
+        #pieza-dañada {
+            background-color: #dc3545; /* Rojo */
+            color: white;
+        }
+
+        #reiniciar-conteo {
+            background-color: black; /* Negro */
+            color: white;
+        }
+
+        #restablecer-registros {
+            background-color: #dc3545; /* Rojo */
+            color: white;
+        }
+
+        #guardar-registros {
+            background-color: #2d57fe; /* Azulado */
+            color: white;
+        }
+
+        /* Estilo personalizado para botones de exportación */
+        #export-word {
+            background-color: #007bff; /* Azul */
+            color: white;
+        }
+
+        #export-excel {
+            background-color: #28a745; /* Verde */
+            color: white;
+        }
+
+        #export-pdf {
+            background-color: #dc3545; /* Rojo */
+            color: white;
+        }
+
+        #export-txt {
+            background-color: white; /* Blanco */
+            color: black; /* Texto negro */
+            border: 2px solid black;
+        }
+
+        /* Modales */
+        #modal,
+        #setup-modal,
+        #comment-modal,
+        #format-modal,
+        #file-name-modal,
+        #records-modal {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 3;
+        }
+
+        /* Contenido de los modales */
+        #modal-content,
+        #setup-modal-content,
+        #comment-modal-content,
+        #format-modal-content,
+        #file-name-modal-content,
+        #records-modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            max-width: 90%;
+            margin: 10px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* Input y botones de formulario */
+        input[type="text"],
+        input[type="number"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px 0;
+            font-size: 1em;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+
+        .button-cancelar {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* Estilos adicionales */
+        @media (max-width: 600px) {
+            .button {
+                width: calc(100% - 10px);
+            }
+        }
+
+        .total-label {
+            color: green;
+        }
+
+        .total-danadas {
+            color: red;
+        }
+
+        /* Lista de registros deslizable */
+        .scrollable-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        /* Icono de lápiz */
+        .edit-icon {
+            position: absolute;
+            top: 10px;
+            right: 50px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            background: url('https://cdn-icons-png.flaticon.com/512/1159/1159633.png') no-repeat center center;
+            background-size: contain;
+        }
+
+        /* Icono de Mostrar/Ocultar */
+        .toggle-icon {
+            position: absolute;
+            top: 10px;
+            right: 90px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            background-size: contain;
+        }
+
+        .mostrar-icon {
+            background: url('https://cdn-icons-png.flaticon.com/512/159/159604.png') no-repeat center center;
+        }
+
+        .ocultar-icon {
+            background: url('https://cdn-icons-png.flaticon.com/512/3287/3287898.png') no-repeat center center;
+        }
+
+        /* Ventana emergente de registros */
+        #records-modal-content {
+            height: 80%;
+            width: 80%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Botón de cerrar ventana emergente */
+        #close-records {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            width: 40px;
+            height: 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            text-align: center;
+            line-height: 30px;
+        }
+
+        /* Estilo de edición */
+        .edit-mode input[type="text"],
+        .edit-mode input[type="number"] {
+            border: 2px solid #007bff;
+            outline: none;
+        }
+
+        .edit-controls {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .edit-mode .edit-controls {
+            display: block;
+        }
+
+        .registro-titulo {
+            cursor: pointer;
+            font-weight: bold;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            margin-top: 5px;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .registro-titulo:hover {
+            background-color: #e0e0e0;
+        }
+
+        .registro-detalle {
+            display: none;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 5px;
+            background-color: #ffffff;
+        }
+
+        .registro-mostrado .edit-icon {
+            top: 10px;
+            right: 50px;
+        }
+
+        .registro-mostrado .toggle-icon {
+            right: 10px;
+        }
+
+        .comentario-numero {
+            display: inline-block;
+            width: 20px;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Librería DOCX -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.4.0/docx.min.js"></script>
+</head>
+
+<body>
+    <div>
+        <button id="comenzar" class="button">Comenzar</button>
+    </div>
+    <div id="setup-modal">
+        <div id="setup-modal-content">
+            <h2>Configuración inicial</h2>
+            <form id="setup-form">
+                <label for="lote-nombre">Número de lote:</label><br>
+                <input type="text" id="lote-nombre" required><br>
+                <label for="numero-parte">Número de parte:</label><br>
+                <input type="text" id="numero-parte" required><br>
+                <label for="pieza-meta">Piezas por contar:</label><br>
+                <input type="number" id="pieza-meta" required min="1"><br>
+                <button type="submit" id="setup-submit" class="button">Iniciar conteo</button>
+            </form>
+            <button id="cancelar-configuracion" class="button-cancelar">Cancelar</button>
+        </div>
+    </div>
+    <div id="comment-modal">
+        <div id="comment-modal-content">
+            <h2>Agregar comentario</h2>
+            <form id="comment-form">
+                <label for="comment">Comentario:</label><br>
+                <input type="text" id="comment" required><br>
+                <button type="submit" class="button">Guardar comentario</button>
+            </form>
+            <button id="cancelar-comentario" class="button button-cancelar">Cancelar</button>
+        </div>
+    </div>
+    <div id="format-modal">
+        <div id="format-modal-content">
+            <h2>Seleccionar formato de archivo</h2>
+            <button id="export-word" class="button">Exportar a Word (.docx)</button>
+            <button id="export-excel" class="button">Exportar a Excel (.xlsx)</button>
+            <button id="export-pdf" class="button">Exportar a PDF (.pdf)</button>
+            <button id="export-txt" class="button">Exportar a TXT (.txt)</button>
+            <button id="cancelar-formato" class="button button-cancelar">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="file-name-modal">
+        <div id="file-name-modal-content">
+            <h2>Ingresa un nombre para el documento</h2>
+            <input type="text" id="file-name-input" placeholder="Nombre del documento" required>
+            <div>
+                <button id="confirm-nombre" class="button">Confirmar</button>
+                <button id="cancelar-nombre" class="button button-cancelar">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ventana emergente de registros -->
+    <div id="records-modal">
+        <div id="records-modal-content">
+            <button id="close-records">X</button>
+            <div class="modal-icons">
+                <div class="toggle-icon mostrar-icon"></div>
+                <div class="edit-icon"></div>
+            </div>
+            <h2>Registros Guardados</h2>
+            <div id="records" class="scrollable-list"></div>
+        </div>
+    </div>
+
+    <div class="button-container">
+        <button id="pieza-aceptada" class="button" disabled>Piezas Aceptadas</button>
+        <button id="pieza-dañada" class="button" disabled>Piezas Dañadas</button>
+        <button id="eliminar-pieza" class="button" disabled>Eliminar Pieza Anterior</button>
+        <button id="reiniciar-conteo" class="button" disabled>Reiniciar Conteo</button>
+        <button id="restablecer-registros" class="button" disabled>Restablecer Registros</button>
+    </div>
+    <div id="counts">
+        <p><strong>Total Piezas:</strong> <span id="total-count">0</span></p>
+        <p><strong>Piezas Aceptadas:</strong> <span id="pieza-aceptada-count">0</span></p>
+        <p><strong>Piezas Dañadas:</strong> <span id="pieza-dañada-count">0</span></p>
+    </div>
+    <div id="menu">
+        <button id="guardar-registros" class="button" disabled>Guardar Registros</button>
+        <button id="boton-menu" class="button">Mostrar Registros</button>
+    </div>
+    <div id="modal">
+        <div id="modal-content" class="scrollable">
+            <h2>Registro Guardado</h2>
+            <div id="registro"></div>
+            <button id="iniciar-nuevo" class="button">Iniciar Nuevo</button>
+        </div>
+    </div>
+
+    <script>
+        // Función para descargar un archivo en formato blob
+        function downloadBlob(blob, fileName) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        let piezaAceptadaCount = 0;
+        let piezaDañadaCount = 0;
+        let totalCount = 0;
+        let piezaMeta = 0;
+        let loteNombre = '';
+        let numeroParte = '';
+        let registros = [];
+        let registroActual = null;
+        let comentarioCount = 0; // Ajustado a 0 para comenzar
+        let registroNumero = 1; // Registra el número del registro siguiente
+        let archivoNombre = 'registro'; // Nombre por defecto del archivo
+        let piezaHistorico = []; // Historial de piezas ingresadas
+        let editandoRegistro = false; // Flag para saber si estamos editando
+        let mostrandoTodos = false; // Flag para saber si se están mostrando todos los registros
+        let comentarioCounter = 0; // Contador para los toques de comentarios
+
+        const piezaAceptadaButton = document.getElementById('pieza-aceptada');
+        const piezaDañadaButton = document.getElementById('pieza-dañada');
+        const eliminarPiezaButton = document.getElementById('eliminar-pieza');
+        const reiniciarConteoButton = document.getElementById('reiniciar-conteo');
+        const restablecerRegistrosButton = document.getElementById('restablecer-registros');
+        const iniciarNuevoButton = document.getElementById('iniciar-nuevo');
+        const piezaAceptadaCountDisplay = document.getElementById('pieza-aceptada-count');
+        const piezaDañadaCountDisplay = document.getElementById('pieza-dañada-count');
+        const totalCountDisplay = document.getElementById('total-count');
+        const modal = document.getElementById('modal');
+        const registroElement = document.getElementById('registro');
+        const menuButton = document.getElementById('boton-menu');
+        const recordsDiv = document.getElementById('records');
+        const recordsModal = document.getElementById('records-modal');
+        const closeRecordsButton = document.getElementById('close-records');
+        const setupModal = document.getElementById('setup-modal');
+        const setupForm = document.getElementById('setup-form');
+        const cancelarConfiguracionButton = document.getElementById('cancelar-configuracion');
+        const comenzarButton = document.getElementById('comenzar');
+        const commentModal = document.getElementById('comment-modal');
+        const commentForm = document.getElementById('comment-form');
+        const comentarioInput = document.getElementById('comment');
+        const cancelarComentarioButton = document.getElementById('cancelar-comentario');
+        const guardarRegistrosButton = document.getElementById('guardar-registros');
+        const formatModal = document.getElementById('format-modal');
+        const exportWordButton = document.getElementById('export-word');
+        const exportExcelButton = document.getElementById('export-excel');
+        const exportPdfButton = document.getElementById('export-pdf');
+        const exportTxtButton = document.getElementById('export-txt');
+        const cancelarFormatoButton = document.getElementById('cancelar-formato');
+        const fileNameInput = document.getElementById('file-name-input');
+        const fileNameModal = document.getElementById('file-name-modal');
+
+        comenzarButton.addEventListener('click', () => {
+            setupModal.style.display = 'flex';
+        });
+
+        piezaAceptadaButton.addEventListener('click', () => {
+            if (piezaMeta > 0 && totalCount < piezaMeta) {
+                piezaAceptadaCount++;
+                totalCount++;
+                comentarioCounter++;
+                piezaHistorico.push({ tipo: 'aceptada', numero: comentarioCounter });
+                updateDisplay();
+                checkTotal();
+            }
+        });
+
+        piezaDañadaButton.addEventListener('click', () => {
+            if (piezaMeta > 0 && totalCount < piezaMeta) {
+                comentarioCounter++;
+                comentarioCount++;
+                commentModal.style.display = 'flex';
+            }
+        });
+
+        eliminarPiezaButton.addEventListener('click', () => {
+            if (totalCount > 0) {
+                const confirmation = confirm("¿Seguro que quieres eliminar la pieza anterior?");
+                if (confirmation) {
+                    const lastPiece = piezaHistorico.pop();
+                    if (lastPiece.tipo === 'dañada' && piezaDañadaCount > 0) {
+                        registroActual.comentarios = registroActual.comentarios.filter(c => c.numero !== lastPiece.numero);
+                        piezaDañadaCount--;
+                    } else if (lastPiece.tipo === 'aceptada' && piezaAceptadaCount > 0) {
+                        piezaAceptadaCount--;
+                    }
+                    totalCount--;
+                    comentarioCounter--; // Reducción del contador
+                    adjustCommentNumbers();
+                    updateDisplay();
+                }
+            }
+        });
+
+        reiniciarConteoButton.addEventListener('click', () => {
+            const confirmation = confirm("¿Seguro que quieres reiniciar el conteo?");
+            if (confirmation) {
+                resetCounts();
+                resetState();
+                setupModal.style.display = 'flex';
+            }
+        });
+
+        restablecerRegistrosButton.addEventListener('click', () => {
+            if (registros.length > 0) {
+                const confirmation = confirm("¿Seguro que quieres restablecer los registros?");
+                if (confirmation) {
+                    resetCounts();
+                    registros = [];
+                    registroNumero = 1; // Reinicia el contador de registros
+                    updateRecordsDisplay();
+                    guardarRegistrosButton.disabled = true; // Desactiva el botón si no hay registros
+                    setupModal.style.display = 'flex';
+                }
+            }
+        });
+
+        setupForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            loteNombre = document.getElementById('lote-nombre').value;
+            numeroParte = document.getElementById('numero-parte').value;
+            piezaMeta = Math.max(1, parseInt(document.getElementById('pieza-meta').value)); // Asegúrate de que sea un entero
+
+            if (isNaN(piezaMeta) || piezaMeta < 1) {
+                alert("Por favor, introduce un número válido de piezas por contar.");
+                return; // Evita continuar si no es válido
+            }
+
+            registroActual = { loteNombre, numeroParte, piezaAceptadaCount, piezaDañadaCount, comentarios: [] };
+            resetCounts();
+            updateDisplay();
+            setupModal.style.display = 'none';
+            enableButtons(); // Habilita los botones
+        });
+
+        cancelarConfiguracionButton.addEventListener('click', () => {
+            setupModal.style.display = 'none';
+        });
+
+        commentForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const comentario = comentarioInput.value;
+            agregadoComentario(comentario);
+        });
+
+        cancelarComentarioButton.addEventListener('click', () => {
+            comentarioInput.value = '';
+            commentModal.style.display = 'none';
+        });
+
+        menuButton.addEventListener('click', () => {
+            if (registros.length > 0) {
+                recordsModal.style.display = 'flex';
+                updateRecordsDisplay();
+            }
+        });
+
+        closeRecordsButton.addEventListener('click', () => {
+            if (editandoRegistro) {
+                const confirmation = confirm("¿Seguro que quieres salir sin guardar los cambios?");
+                if (!confirmation) return;
+            }
+            recordsModal.style.display = 'none';
+            editandoRegistro = false;
+        });
+
+        iniciarNuevoButton.addEventListener('click', () => {
+            modal.style.display = 'none';
+            reiniciarConteoButton.disabled = true;
+            restablecerRegistrosButton.disabled = true;
+            piezaAceptadaButton.disabled = true;
+            piezaDañadaButton.disabled = true;
+            eliminarPiezaButton.disabled = true;
+            comenzarButton.click();
+        });
+
+        guardarRegistrosButton.addEventListener('click', () => {
+            formatModal.style.display = 'flex'; // Muestra el modal para seleccionar el formato
+        });
+
+        cancelarFormatoButton.addEventListener('click', () => {
+            formatModal.style.display = 'none';
+        });
+
+        // Mostrar el modal para ingresar el nombre del archivo antes de exportar
+        function showFileNameModal(callback) {
+            fileNameInput.value = ''; // Limpiar el campo de entrada
+            fileNameModal.style.display = 'flex';
+
+            document.getElementById('confirm-nombre').onclick = () => {
+                const enteredName = fileNameInput.value.trim();
+                if (enteredName) {
+                    archivoNombre = enteredName; // Guardar el nombre ingresado
+                    fileNameModal.style.display = 'none';
+                    callback(archivoNombre); // Llama a la función de exportación con el nombre ingresado
+                } else {
+                    alert("Por favor, ingresa un nombre válido.");
+                }
+            };
+
+            document.getElementById('cancelar-nombre').onclick = () => {
+                fileNameModal.style.display = 'none'; // Cerrar el modal sin hacer nada
+            };
+        }
+
+        // Botones de exportación
+        exportWordButton.addEventListener('click', () => {
+            showFileNameModal(exportToWord); // Mostrar modal para el nombre, luego exportar a Word
+        });
+        exportExcelButton.addEventListener('click', () => {
+            showFileNameModal(exportToExcel); // Mostrar modal para el nombre, luego exportar a Excel
+        });
+        exportPdfButton.addEventListener('click', () => {
+            showFileNameModal(exportToPDF); // Mostrar modal para el nombre, luego exportar a PDF
+        });
+        exportTxtButton.addEventListener('click', () => {
+            showFileNameModal(exportToTXT); // Mostrar modal para el nombre, luego exportar a TXT
+        });
+
+        // Funciones de exportación
+
+        function exportToWord(fileName) {
+            const doc = new window.docx.Document({
+                sections: [
+                    {
+                        properties: {},
+                        children: registros.map(registro => [
+                            new window.docx.Paragraph({
+                                text: `Registro #${registro.numero}`,
+                                heading: window.docx.HeadingLevel.HEADING_1,
+                                alignment: window.docx.AlignmentType.LEFT
+                            }),
+                            new window.docx.Paragraph({
+                                text: `Fecha: ${registro.fecha}`,
+                                heading: window.docx.HeadingLevel.HEADING_2,
+                                alignment: window.docx.AlignmentType.LEFT
+                            }),
+                            new window.docx.Paragraph({
+                                text: `Lote: ${registro.loteNombre}`,
+                                alignment: window.docx.AlignmentType.LEFT
+                            }),
+                            new window.docx.Paragraph({
+                                text: `Número de Parte: ${registro.numeroParte}`,
+                                alignment: window.docx.AlignmentType.LEFT
+                            }),
+                            new window.docx.Paragraph({
+                                text: `Piezas Aceptadas: ${registro.piezaAceptadaCount}`,
+                                alignment: window.docx.AlignmentType.LEFT
+                            }),
+                            new window.docx.Paragraph({
+                                text: `Piezas Dañadas: ${registro.piezaDañadaCount}`,
+                                alignment: window.docx.AlignmentType.LEFT
+                            }),
+                            new window.docx.Paragraph({
+                                text: `Total Piezas: ${registro.totalCount}`,
+                                alignment: window.docx.AlignmentType.LEFT
+                            }),
+                            new window.docx.Paragraph({
+                                text: 'Comentarios:',
+                                heading: window.docx.HeadingLevel.HEADING_2,
+                                alignment: window.docx.AlignmentType.LEFT
+                            }),
+                            ...registro.comentarios.map(c =>
+                                new window.docx.Paragraph({
+                                    text: `#${c.numero} - ${c.comentario}`,
+                                    alignment: window.docx.AlignmentType.LEFT
+                                })
+                            )
+                        ]).flat()
+                    }
+                ]
+            });
+
+            window.docx.Packer.toBlob(doc).then(blob => {
+                downloadBlob(blob, fileName + '.docx'); // Usa el nombre ingresado por el usuario
+            });
+        }
+
+        function exportToExcel(fileName) {
+            const workbook = XLSX.utils.book_new();
+            registros.forEach(registro => {
+                const worksheetData = [
+                    ["Campo", "Valor"],
+                    ["Número", registro.numero],
+                    ["Fecha", registro.fecha],
+                    ["Lote", registro.loteNombre],
+                    ["Número de Parte", registro.numeroParte],
+                    ["Piezas Aceptadas", registro.piezaAceptadaCount],
+                    ["Piezas Dañadas", registro.piezaDañadaCount],
+                    ["Total Piezas", registro.totalCount],
+                    ["Comentarios", ...registro.comentarios.map(c => `#${c.numero} - ${c.comentario}`)]
+                ];
+
+                const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+
+                // Centrar las celdas de la información
+                worksheet['!cols'] = [{ wpx: 100 }, { wpx: 300 }];
+                Object.keys(worksheet).forEach(cell => {
+                    if (cell[0] !== '!') {
+                        worksheet[cell].s = { alignment: { vertical: 'center', horizontal: 'center' } };
+                    }
+                });
+
+                XLSX.utils.book_append_sheet(workbook, worksheet, `Registro ${registro.numero}`);
+            });
+
+            XLSX.writeFile(workbook, fileName + '.xlsx'); // Usa el nombre ingresado por el usuario
+        }
+
+        function exportToPDF(fileName) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const fontSize = 12;
+
+            registros.forEach((registro, index) => {
+                if (index !== 0) {
+                    doc.addPage(); // Añadir una nueva página
+                }
+
+                doc.setFont('Arial', 'bold');
+                let yOffset = 10; // Margen superior inicial
+
+                doc.setFontSize(14); // Establece el tamaño de la letra a 14
+                doc.text(`Registro #${registro.numero}`, 10, yOffset);
+                yOffset += fontSize + 5; // Espacio después del título
+
+                doc.text(`Fecha: ${registro.fecha}`, 10, yOffset);
+                yOffset += fontSize + 5;
+                doc.text(`Lote: ${registro.loteNombre}`, 10, yOffset);
+                yOffset += fontSize + 5;
+                doc.text(`Número de Parte: ${registro.numeroParte}`, 10, yOffset);
+                yOffset += fontSize + 5;
+                doc.text(`Piezas Aceptadas: ${registro.piezaAceptadaCount}`, 10, yOffset);
+                yOffset += fontSize + 5;
+                doc.text(`Piezas Dañadas: ${registro.piezaDañadaCount}`, 10, yOffset);
+                yOffset += fontSize + 5;
+                doc.text(`Total Piezas: ${registro.totalCount}`, 10, yOffset);
+                yOffset += fontSize + 5;
+                doc.text(`Comentarios:`, 10, yOffset);
+
+                // Agregar comentarios
+                let commentsOffset = yOffset + 10; // Espacio después del título de comentarios
+                registro.comentarios.forEach((c, cIndex) => {
+                    if (commentsOffset >= 280) { // Si llega al final de la página, crear una nueva
+                        doc.addPage();
+                        commentsOffset = 10; // Reiniciar el desplazamiento
+                    }
+                    doc.text(`#${c.numero} - ${c.comentario}`, 10, commentsOffset);
+                    commentsOffset += fontSize + 5;
+                });
+            });
+
+            doc.save(fileName + '.pdf'); // Usa el nombre ingresado por el usuario
+        }
+
+        function exportToTXT(fileName) {
+            const blob = new Blob([registros.map(registro =>
+                `Registro #${registro.numero}\n` +
+                `Fecha: ${registro.fecha}\n` +
+                `Lote: ${registro.loteNombre}\n` +
+                `Número de Parte: ${registro.numeroParte}\n` +
+                `Piezas Aceptadas: ${registro.piezaAceptadaCount}\n` +
+                `Piezas Dañadas: ${registro.piezaDañadaCount}\n` +
+                `Total Piezas: ${registro.totalCount}\n` +
+                `Comentarios:\n${registro.comentarios.length > 0 ? registro.comentarios.map(c => `#${c.numero} - ${c.comentario}`).join('\n') : 'Ninguno'}\n`
+            ).join('\n\n')], { type: 'text/plain' });
+
+            downloadBlob(blob, fileName + '.txt'); // Usa el nombre ingresado por el usuario
+        }
+
+        function updateDisplay() {
+            piezaAceptadaCountDisplay.textContent = piezaAceptadaCount;
+            piezaDañadaCountDisplay.textContent = piezaDañadaCount;
+            totalCountDisplay.textContent = totalCount;
+        }
+
+        function checkTotal() {
+            if (totalCount >= piezaMeta) {
+                saveRecord();
+                modal.style.display = 'flex';
+                disableButtons(); // Desactivamos los botones al alcanzar el total
+                guardarRegistrosButton.disabled = false; // Habilita el botón de guardar registros
+            }
+        }
+
+        function resetCounts() {
+            piezaAceptadaCount = 0;
+            piezaDañadaCount = 0;
+            totalCount = 0;
+            comentarioCount = 0; // Restablecer conteo de comentarios
+            piezaHistorico = []; // Restablecer el historial de piezas
+            comentarioCounter = 0; // Reiniciar el contador de comentarios
+            updateDisplay();
+        }
+
+        function resetState() {
+            registroActual = null;
+            disableButtons();
+        }
+
+        function agregadoComentario(comentario) {
+            if (comentario.length === 0) {
+                alert("El comentario no puede estar vacío.");
+                return;
+            }
+            if (registroActual) {
+                const numeroComentario = comentarioCounter;
+                registroActual.comentarios.push({ comentario, numero: numeroComentario });
+                piezaDañadaCount++;
+                totalCount++;
+                piezaHistorico.push({ tipo: 'dañada', numero: numeroComentario });
+                updateDisplay();
+                checkTotal();
+                comentarioInput.value = '';
+                commentModal.style.display = 'none';
+            } else {
+                alert("No hay un registro actual para agregar el comentario.");
+            }
+        }
+
+        function adjustCommentNumbers() {
+            if (registroActual) {
+                registroActual.comentarios.forEach((comentario, index) => {
+                    comentario.numero = index + 1;
+                });
+            }
+        }
+
+        function editarRegistro() {
+            const registrosMostrados = document.querySelectorAll('.registro-detalle');
+            const editIcon = document.querySelector('.edit-icon');
+
+            if (mostrandoTodos) {
+                alert("Selecciona un registro para editar.");
+                return;
+            }
+
+            registrosMostrados.forEach((registroDiv) => {
+                registroDiv.classList.toggle('edit-mode');
+
+                if (registroDiv.classList.contains('edit-mode')) {
+                    const registro = registros.find(r => r.numero == registroDiv.dataset.numero);
+                    // Convertir los campos en editables
+                    const loteElem = registroDiv.querySelector('.lote');
+                    const parteElem = registroDiv.querySelector('.parte');
+                    loteElem.innerHTML = `<input type="text" value="${registro.loteNombre}">`;
+                    parteElem.innerHTML = `<input type="text" value="${registro.numeroParte}">`;
+
+                    // Convertir los comentarios en editables
+                    const comentariosElem = registroDiv.querySelectorAll('.comentario');
+                    comentariosElem.forEach((elem, i) => {
+                        elem.innerHTML = `<span class="comentario-numero">${i + 1}</span><input type="text" value="${registro.comentarios[i].comentario}">`;
+                    });
+
+                    // Mostrar los controles de edición
+                    const editControls = registroDiv.querySelector('.edit-controls');
+                    editControls.style.display = 'block';
+
+                    // Guardar cambios
+                    editControls.querySelector('.guardar').onclick = () => {
+                        const nuevoLote = loteElem.querySelector('input').value;
+                        const nuevoParte = parteElem.querySelector('input').value;
+                        const nuevosComentarios = Array.from(comentariosElem).map((elem) => elem.querySelector('input').value);
+
+                        // Actualizar registro
+                        registro.loteNombre = nuevoLote;
+                        registro.numeroParte = nuevoParte;
+                        registro.comentarios.forEach((c, i) => {
+                            c.comentario = nuevosComentarios[i];
+                        });
+
+                        updateRecordsDisplay();
+                    };
+
+                    // Cancelar edición
+                    editControls.querySelector('.cancelar').onclick = () => {
+                        updateRecordsDisplay();
+                    };
+                }
+            });
+        }
+
+        function toggleRegistro(index) {
+            const registroDiv = document.querySelectorAll('#records > div')[index];
+            const detalleDiv = registroDiv.querySelector('.registro-detalle');
+
+            const currentlyVisible = detalleDiv.style.display === 'block';
+
+            // Ocultar todos los detalles
+            if (!mostrandoTodos) {
+                document.querySelectorAll('.registro-detalle').forEach(d => d.style.display = 'none');
+                document.querySelectorAll('.registro-titulo').forEach(t => t.classList.remove('registro-mostrado'));
+            }
+
+            // Mostrar solo el seleccionado si no estaba visible
+            if (!currentlyVisible || mostrandoTodos) {
+                detalleDiv.style.display = 'block';
+                registroDiv.querySelector('.registro-titulo').classList.add('registro-mostrado');
+            } else {
+                detalleDiv.style.display = 'none';
+            }
+        }
+
+        function toggleAllRegistros(event) {
+            event.stopPropagation();
+            mostrandoTodos = !mostrandoTodos;
+            const mostrarIcon = document.querySelector('.toggle-icon');
+
+            if (mostrandoTodos) {
+                document.querySelectorAll('.registro-detalle').forEach(d => d.style.display = 'block');
+                document.querySelectorAll('.registro-titulo').forEach(t => t.classList.add('registro-mostrado'));
+                mostrarIcon.classList.remove('mostrar-icon');
+                mostrarIcon.classList.add('ocultar-icon');
+                document.querySelector('.edit-icon').style.display = 'none';
+            } else {
+                document.querySelectorAll('.registro-detalle').forEach(d => d.style.display = 'none');
+                document.querySelectorAll('.registro-titulo').forEach(t => t.classList.remove('registro-mostrado'));
+                mostrarIcon.classList.remove('ocultar-icon');
+                mostrarIcon.classList.add('mostrar-icon');
+                document.querySelector('.edit-icon').style.display = 'block';
+            }
+        }
+
+        function disableButtons() {
+            piezaAceptadaButton.disabled = true;
+            piezaDañadaButton.disabled = true;
+            eliminarPiezaButton.disabled = true;
+            reiniciarConteoButton.disabled = true;
+            restablecerRegistrosButton.disabled = true;
+        }
+
+        function enableButtons() {
+            piezaAceptadaButton.disabled = false;
+            piezaDañadaButton.disabled = false;
+            eliminarPiezaButton.disabled = false;
+            reiniciarConteoButton.disabled = false;
+            restablecerRegistrosButton.disabled = registros.length === 0; // Habilita Restablecer Registros solo si hay registros
+        }
+
+        // Guardar registro con el siguiente número secuencial
+        function saveRecord() {
+            const fecha = new Date().toLocaleString();
+            const registro = {
+                numero: registroNumero++, // Usa el número actual y luego incrementa
+                fecha,
+                loteNombre,
+                numeroParte,
+                piezaAceptadaCount,
+                piezaDañadaCount,
+                totalCount, // Incluir total en el registro
+                comentarios: registroActual ? registroActual.comentarios : [] // Comprueba si hay un registro actual
+            };
+            registros.push(registro);
+            adjustRegistroNumbers();
+
+            updateRecordsDisplay();
+            // Mostrar el registro guardado
+            displaySavedRecord(registro);
+
+            if (registroActual) {
+                registroActual = { loteNombre, numeroParte, piezaAceptadaCount, piezaDañadaCount, comentarios: [] };
+            }
+            resetCounts(); // Reinicia los contadores para el nuevo registro
+        }
+
+        function displaySavedRecord(registro) {
+            registroElement.innerHTML = `<p><strong>Registro Guardado:</strong></p>
+                <p><strong>Registro #${registro.numero}</strong></p>
+                ${!(registro.piezaDañadaCount > 0 && registro.piezaAceptadaCount > 0) ? 
+                (registro.piezaDañadaCount === 0 ? `<p class="total-label">Total De Piezas Aceptadas</p>` : 
+                `<p class="total-danadas">Total De Piezas Dañadas</p>`) : ''}
+                <p><strong>Fecha:</strong> ${registro.fecha}</p>
+                <p><strong>Lote:</strong> ${loteNombre}</p>
+                <p><strong>Número de Parte:</strong> ${numeroParte}</p>
+                <p><strong>Piezas Aceptadas:</strong> ${registro.piezaAceptadaCount}</p>
+                <p><strong>Piezas Dañadas:</strong> ${registro.piezaDañadaCount}</p>
+                <p><strong>Total Piezas:</strong> ${registro.totalCount}</p>
+                <p><strong>Comentarios:</strong> ${registro.comentarios.length > 0 ? registro.comentarios.map(c => `#${c.numero} - ${c.comentario}`).join('<br>') : 'Ninguno'}</p>`;
+        }
+
+        function adjustRegistroNumbers() {
+            const existingNumbers = registros.map(r => r.numero).sort((a, b) => a - b);
+            const correctOrder = [];
+
+            for (let i = 1; i <= existingNumbers.length; i++) {
+                correctOrder.push(i);
+            }
+
+            // Reasignar números correctos
+            correctOrder.forEach((num, index) => {
+                if (index < registros.length) {
+                    registros[index].numero = num;
+                }
+            });
+        }
+
+        function updateRecordsDisplay() {
+            recordsDiv.innerHTML = registros.map((registro, index) => `
+                <div data-numero="${registro.numero}">
+                    <div class="registro-titulo" onclick="toggleRegistro(${index})">
+                        Registro #${registro.numero}
+                    </div>
+                    <div class="registro-detalle">
+                        ${!(registro.piezaDañadaCount > 0 && registro.piezaAceptadaCount > 0) ? 
+                        (registro.piezaDañadaCount === 0 ? `<p class="total-label">Total De Piezas Aceptadas</p>` : 
+                        `<p class="total-danadas">Total De Piezas Dañadas</p>`) : ''}
+                        <p><strong>Fecha:</strong> ${registro.fecha}</p>
+                        <p><strong>Lote:</strong> <span class="lote">${registro.loteNombre}</span></p>
+                        <p><strong>Número de Parte:</strong> <span class="parte">${registro.numeroParte}</span></p>
+                        <p><strong>Piezas Aceptadas:</strong> ${registro.piezaAceptadaCount}</p>
+                        <p><strong>Piezas Dañadas:</strong> ${registro.piezaDañadaCount}</p>
+                        <p><strong>Total Piezas:</strong> ${registro.totalCount}</p>
+                        <p><strong>Comentarios:</strong> ${registro.comentarios.length > 0 ? registro.comentarios.map(c => `<span class="comentario-numero">#${c.numero}</span><span class="comentario"> - ${c.comentario}</span>`).join('<br>') : 'Ninguno'}</p>
+                        <div class="edit-controls">
+                            <button class="button guardar">Guardar</button>
+                            <button class="button-cancelar cancelar">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function confirmDelete(index) {
+            const confirmation = confirm("¿Estás seguro de que deseas eliminar este registro?");
+            if (confirmation) {
+                deleteRecord(index);
+            }
+        }
+
+        function deleteRecord(index) {
+            registros.splice(index, 1);
+            adjustRegistroNumbers();
+            updateRecordsDisplay(); 
+        }
+    </script>
+</body>
+
+</html>
